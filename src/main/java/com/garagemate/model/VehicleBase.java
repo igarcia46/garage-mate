@@ -76,9 +76,13 @@ public abstract class VehicleBase {
 
     // ---- maintenance behavior ----
     public void addMaintenanceRecord(MaintenanceRecord record) {
-        Objects.requireNonNull(record, "record cannot be null");
+        if (record == null) {
+            throw new IllegalArgumentException("MaintenanceRecord cannot be null");
+        }
 
         // don't allow a service mileage greater than current mileage
+        // TODO: will need to update this once MaintenanceRecord UI is finished
+        // prompt user that vehicle mileage will be updated if mileage here is higher
         if (record.getMileageAtService() > this.currentMileage) {
             throw new IllegalArgumentException("mileageAtService cannot exceed currentMileage");
         }
