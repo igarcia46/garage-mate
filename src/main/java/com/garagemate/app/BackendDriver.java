@@ -3,6 +3,10 @@ package com.garagemate.app;
 import com.garagemate.model.*;
 import com.garagemate.persistence.TextFileRepository;
 
+/**
+ * the purpose of this class is for testing only
+ * it is not used in any other part of the application
+ */
 public class BackendDriver {
     public static void main(String[] args) {
         // file path

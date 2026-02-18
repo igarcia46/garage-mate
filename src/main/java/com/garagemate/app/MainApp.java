@@ -11,6 +11,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
 
 import java.util.UUID;
 
@@ -40,6 +42,17 @@ public class MainApp extends Application {
     private TextField doorsField;
     private TextField ccField;
     private Label extraLabel;
+
+    // details / maintenance view state
+    private VehicleBase selectedVehicle;
+    private final ObservableList<MaintenanceRecord> recordItems = FXCollections.observableArrayList();
+    private TableView<MaintenanceRecord> recordTable;
+
+    // add Record form state
+    private TextField recordDateField;
+    private TextField recordTypeField;
+    private TextField recordMileageField;
+    private TextArea recordNotesArea;
 
     @Override
     public void start(Stage stage) {
@@ -84,6 +97,18 @@ public class MainApp extends Application {
     private void showHomeView() {
         // center: vehicle list
         vehicleListView = new ListView<>(vehicleItems);
+
+        // open details
+        vehicleListView.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                VehicleBase v = vehicleListView.getSelectionModel().getSelectedItem();
+                if (v != null) {
+                    showVehicleDetailsView(v);
+                }
+            }
+        });
+
+        // populate list
         vehicleListView.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(VehicleBase item, boolean empty) {
@@ -268,6 +293,202 @@ public class MainApp extends Application {
         } else {
             int cc = Integer.parseInt(ccField.getText().trim());
             return new Motorcycle(id, nicknameField.getText(), makeField.getText(), modelField.getText(), year, mileage, cc);
+        }
+    }
+
+    // add vehicle details
+    private void showVehicleDetailsView(VehicleBase vehicle) {
+        this.selectedVehicle = vehicle;
+
+        // Top summary
+        Label title = new Label(vehicle.getNickname() + " (" + vehicle.getVehicleType() + ")");
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        Label info = new Label(
+                vehicle.getYear() + " " + vehicle.getMake() + " " + vehicle.getModel()
+                        + "  •  Current Mileage: " + vehicle.getCurrentMileage()
+        );
+        info.setStyle("-fx-text-fill: #555;");
+
+        VBox header = new VBox(6, title, info);
+        header.setPadding(new Insets(12));
+
+        // Maintenance table
+        recordTable = new TableView<>(recordItems);
+
+        TableColumn<MaintenanceRecord, String> dateCol = new TableColumn<>("Date");
+        dateCol.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getServiceDate())
+        );
+        dateCol.setPrefWidth(120);
+
+        TableColumn<MaintenanceRecord, String> typeCol = new TableColumn<>("Service");
+        typeCol.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getServiceType())
+        );
+        typeCol.setPrefWidth(180);
+
+        TableColumn<MaintenanceRecord, Integer> milesCol = new TableColumn<>("Mileage");
+        milesCol.setCellValueFactory(c ->
+                new ReadOnlyObjectWrapper<>(c.getValue().getMileageAtService())
+        );
+        milesCol.setPrefWidth(100);
+
+        TableColumn<MaintenanceRecord, String> notesCol = new TableColumn<>("Notes");
+        notesCol.setCellValueFactory(c ->
+                new ReadOnlyStringWrapper(c.getValue().getNotes())
+        );
+        notesCol.setPrefWidth(360);
+
+        recordTable.getColumns().setAll(dateCol, typeCol, milesCol, notesCol);
+
+        VBox center = new VBox(10, header, recordTable);
+        center.setPadding(new Insets(0, 12, 12, 12));
+        root.setCenter(center);
+
+        // Bottom buttons
+        Button addRecordBtn = new Button("Add Record");
+        Button removeRecordBtn = new Button("Remove Selected");
+        Button backBtn = new Button("Back");
+
+        addRecordBtn.setOnAction(e -> showAddRecordView());
+        removeRecordBtn.setOnAction(e -> onRemoveSelectedRecord());
+        backBtn.setOnAction(e -> showHomeView());
+
+        HBox buttons = new HBox(10, addRecordBtn, removeRecordBtn, backBtn);
+        buttons.setPadding(new Insets(12));
+        buttons.setAlignment(Pos.CENTER_LEFT);
+
+        root.setBottom(buttons);
+
+        refreshMaintenanceTable();
+    }
+
+    // helpers for maintenance records
+    private void refreshMaintenanceTable() {
+        if (selectedVehicle == null) return;
+        recordItems.setAll(selectedVehicle.getMaintenanceHistory());
+    }
+
+    private void onRemoveSelectedRecord() {
+        if (selectedVehicle == null) return;
+
+        MaintenanceRecord selected = recordTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showError("Nothing Selected", "Please select a service record to remove.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Remove");
+        confirm.setHeaderText("Remove service record?");
+        confirm.setContentText(selected.getServiceType() + " on " + selected.getServiceDate());
+
+        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            selectedVehicle.removeMaintenanceRecord(selected.getRecordId());
+            refreshMaintenanceTable();
+            safeSave();
+        }
+    }
+
+    // add record view
+    private void showAddRecordView() {
+        if (selectedVehicle == null) return;
+
+        Label title = new Label("Add Service Record for: " + selectedVehicle.getNickname());
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
+
+        // TODO: want to add validation here, currently can set anything as date which is ok for scope
+        recordDateField = new TextField();
+        recordDateField.setPromptText("YYYY-MM-DD (ex: 2026-02-17)");
+
+        recordTypeField = new TextField();
+        recordTypeField.setPromptText("ex: Oil Change");
+
+        recordMileageField = new TextField();
+        recordMileageField.setPromptText("ex: 52000");
+
+        recordNotesArea = new TextArea();
+        recordNotesArea.setPromptText("Optional notes...");
+        recordNotesArea.setPrefRowCount(4);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(12));
+
+        int r = 0;
+        grid.add(title, 0, r++, 2, 1);
+
+        grid.add(new Label("Service Date:"), 0, r);
+        grid.add(recordDateField, 1, r++);
+
+        grid.add(new Label("Service Type:"), 0, r);
+        grid.add(recordTypeField, 1, r++);
+
+        grid.add(new Label("Mileage at Service:"), 0, r);
+        grid.add(recordMileageField, 1, r++);
+
+        grid.add(new Label("Notes:"), 0, r);
+        grid.add(recordNotesArea, 1, r++);
+
+        root.setCenter(grid);
+
+        Button addBtn = new Button("Add");
+        Button cancelBtn = new Button("Cancel");
+
+        addBtn.setOnAction(e -> onSubmitAddRecord());
+        cancelBtn.setOnAction(e -> showVehicleDetailsView(selectedVehicle));
+
+        HBox buttons = new HBox(10, addBtn, cancelBtn);
+        buttons.setPadding(new Insets(12));
+        buttons.setAlignment(Pos.CENTER_LEFT);
+
+        root.setBottom(buttons);
+    }
+
+    private void onSubmitAddRecord() {
+        try {
+            // Basic input validation
+            validateNoPipes(recordDateField.getText(), "Service Date");
+            validateNoPipes(recordTypeField.getText(), "Service Type");
+
+            int miles = Integer.parseInt(recordMileageField.getText().trim());
+            String notes = recordNotesArea.getText() == null ? "" : recordNotesArea.getText().trim();
+
+            // If mileage is higher than current mileage, prompt user to update
+            if (miles > selectedVehicle.getCurrentMileage()) {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Update Mileage?");
+                confirm.setHeaderText("Service mileage is higher than current mileage.");
+                confirm.setContentText("Update vehicle mileage to " + miles + " to match this service record?");
+
+                if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+                    selectedVehicle.setCurrentMileage(miles);
+                } else {
+                    // user cancelled update, so reject to keep data consistent
+                    throw new IllegalArgumentException("Please update vehicle mileage before adding this record.");
+                }
+            }
+
+            // Create record (UUID id for new records)
+            MaintenanceRecord record = new MaintenanceRecord(
+                    UUID.randomUUID().toString(),
+                    recordDateField.getText().trim(),
+                    recordTypeField.getText().trim(),
+                    miles,
+                    notes
+            );
+
+            selectedVehicle.addMaintenanceRecord(record);
+
+            safeSave();
+            showVehicleDetailsView(selectedVehicle);
+
+        } catch (NumberFormatException nfe) {
+            showError("Invalid Input", "Mileage must be a valid integer.");
+        } catch (Exception ex) {
+            showError("Invalid Input", ex.getMessage());
         }
     }
 
