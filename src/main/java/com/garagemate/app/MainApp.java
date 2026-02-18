@@ -54,6 +54,11 @@ public class MainApp extends Application {
     private TextField recordMileageField;
     private TextArea recordNotesArea;
 
+    //images
+    private StackPane homeCenter;
+    private Pane emptyBackgroundPane;
+    private VBox emptyMessageOverlay;
+
     @Override
     public void start(Stage stage) {
         repo = new TextFileRepository(DATA_FILE);
@@ -102,20 +107,16 @@ public class MainApp extends Application {
         vehicleListView.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 VehicleBase v = vehicleListView.getSelectionModel().getSelectedItem();
-                if (v != null) {
-                    showVehicleDetailsView(v);
-                }
+                if (v != null) showVehicleDetailsView(v);
             }
         });
 
-        // populate list
         vehicleListView.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(VehicleBase item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
+                if (empty || item == null) setText(null);
+                else {
                     setText(item.getNickname()
                             + "  •  " + item.getYear() + " " + item.getMake() + " " + item.getModel()
                             + "  •  " + item.getVehicleType()
@@ -124,17 +125,23 @@ public class MainApp extends Application {
             }
         });
 
-        root.setCenter(vehicleListView);
+        // empty background + message
+        emptyBackgroundPane = buildEmptyBackgroundPane();     // background image
+        emptyMessageOverlay = buildEmptyMessageOverlay();     // text lives here
 
-        // bottom: home buttons
+        // stack: list at bottom, empty state on top (only visible when empty)
+        homeCenter = new StackPane(vehicleListView, emptyBackgroundPane, emptyMessageOverlay);
+        root.setCenter(homeCenter);
+
+        // bottom buttons
         Button addBtn = new Button("Add Vehicle");
         Button removeBtn = new Button("Remove Selected");
         Button saveBtn = new Button("Save Now");
 
         // EVENTS
-        addBtn.setOnAction(e -> showAddVehicleView());          // swap to 'add vehicle' form
-        removeBtn.setOnAction(e -> onRemoveSelectedVehicle());  // remove
-        saveBtn.setOnAction(e -> safeSave());                   // save
+        addBtn.setOnAction(e -> showAddVehicleView()); // swap to 'add vehicle' form
+        removeBtn.setOnAction(e -> onRemoveSelectedVehicle()); // remove
+        saveBtn.setOnAction(e -> safeSave()); //save
 
         HBox buttons = new HBox(10, addBtn, removeBtn, saveBtn);
         buttons.setPadding(new Insets(12));
@@ -146,7 +153,69 @@ public class MainApp extends Application {
         VBox bottom = new VBox(8, buttons, countLabel);
         bottom.setPadding(new Insets(0, 12, 12, 12));
         root.setBottom(bottom);
+
+        // IMPORTANT: toggle visibility based on list contents
+        updateHomeEmptyState();
     }
+
+    private Pane buildEmptyBackgroundPane() {
+        Pane pane = new Pane();
+
+        var url = getClass().getResource("/images/empty-garage.jpg");
+        if (url == null) {
+            System.out.println("⚠ Missing image: /images/empty-garage.jpg");
+            return pane;
+        }
+
+        BackgroundSize size = new BackgroundSize(
+                100, 100,
+                true, true,
+                false, true   // contain=false, cover=true (fills the space)
+        );
+
+        BackgroundImage bg = new BackgroundImage(
+                new javafx.scene.image.Image(url.toExternalForm()),
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                size
+        );
+
+        pane.setBackground(new Background(bg));
+        return pane;
+    }
+
+    private VBox buildEmptyMessageOverlay() {
+        Label msg = new Label("No vehicles yet.\nClick 'Add Vehicle' to get started.");
+        msg.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
+        msg.setAlignment(Pos.CENTER);
+
+        // readability backing
+        Label backing = new Label();
+        backing.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 12 18; -fx-background-radius: 10;");
+
+        StackPane message = new StackPane(backing, msg);
+
+        VBox box = new VBox(message);
+        box.setAlignment(Pos.CENTER);
+        box.setMouseTransparent(true); // allows clicks to pass through
+        return box;
+    }
+
+    private void updateHomeEmptyState() {
+        boolean empty = vehicleItems.isEmpty();
+
+        if (emptyBackgroundPane != null) {
+            emptyBackgroundPane.setVisible(empty);
+            emptyBackgroundPane.setManaged(empty);
+        }
+        if (emptyMessageOverlay != null) {
+            emptyMessageOverlay.setVisible(empty);
+            emptyMessageOverlay.setManaged(empty);
+        }
+    }
+
+
 
     private void onRemoveSelectedVehicle() {
         VehicleBase selected = vehicleListView.getSelectionModel().getSelectedItem();
@@ -511,6 +580,7 @@ public class MainApp extends Application {
         if (countLabel != null) {
             countLabel.setText("Vehicles: " + vehicleItems.size());
         }
+        updateHomeEmptyState();
     }
 
     private void safeSave() {
