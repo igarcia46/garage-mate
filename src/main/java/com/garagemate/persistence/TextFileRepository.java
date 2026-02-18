@@ -8,8 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Saves and loads Garage Mate data to a local TEXT FILE.
- * No UI code here.
+ * Saves and loads Garage Mate data to a local TEXT FILE
  */
 public class TextFileRepository {
 
@@ -21,10 +20,13 @@ public class TextFileRepository {
 
     public Garage loadGarage() {
         Garage garage = new Garage();
+
+        // check if text file exists first
         if (!Files.exists(filePath)) {
-            return garage; // empty garage if file not present yet
+            return garage; // if no file exists, initialize an empty garage
         }
 
+        // text file exists, parse through it!
         try {
             List<String> lines = Files.readAllLines(filePath);
 
@@ -37,7 +39,7 @@ public class TextFileRepository {
                 }
             }
 
-            // pass 2: load records and attach to vehicles
+            // pass 2: load maintenance records and attach to vehicles
             for (String line : lines) {
                 if (line == null || line.trim().isEmpty()) continue;
                 if (line.startsWith("R|")) {
@@ -77,9 +79,10 @@ public class TextFileRepository {
         }
     }
 
-    // ---- Parsing/formatting helpers ----
+    // ---- parsing/formatting helpers ----
 
     private VehicleBase parseVehicleLine(String line) {
+        // records will always follow the same naming convention
         // V|type|vehicleId|nickname|make|model|year|mileage|extra
         String[] parts = line.split("\\|", -1);
         if (parts.length < 9) throw new IllegalArgumentException("Invalid vehicle line: " + line);
@@ -101,6 +104,7 @@ public class TextFileRepository {
     }
 
     private ParsedRecord parseRecordLine(String line) {
+        // records will always follow the same naming convention
         // R|vehicleId|recordId|date|serviceType|mileageAtService|notes
         String[] parts = line.split("\\|", -1);
         if (parts.length < 7) throw new IllegalArgumentException("Invalid record line: " + line);
@@ -147,14 +151,14 @@ public class TextFileRepository {
         );
     }
 
-    // Keep notes safe even if user types "|" in notes.
+    // keep notes safe even if user types "|" in notes
     private static String escape(String value) {
         return value == null ? "" : value.replace("\\", "\\\\").replace("|", "\\|");
     }
 
     private static String unescape(String value) {
         if (value == null) return "";
-        // Simple unescape for our two escape rules
+        // simple unescape for the two escape rules
         return value.replace("\\|", "|").replace("\\\\", "\\");
     }
 

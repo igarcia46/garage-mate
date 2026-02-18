@@ -6,9 +6,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Abstract base class for all vehicles in Garage Mate.
- * This class contains shared fields and behavior for Car and Motorcycle.
- * NOTE: No JavaFX/UI code belongs here.
+ * Abstract base class for all vehicles in Garage Mate
+ * This class contains shared fields and behavior for Car and Motorcycle
  */
 public abstract class VehicleBase {
 
@@ -37,7 +36,7 @@ public abstract class VehicleBase {
         setCurrentMileage(currentMileage);
     }
 
-    // ---- Getters ----
+    // ---- getters ----
     public String getVehicleId() { return vehicleId; }
     public String getNickname() { return nickname; }
     public String getMake() { return make; }
@@ -46,13 +45,13 @@ public abstract class VehicleBase {
     public int getCurrentMileage() { return currentMileage; }
 
     /**
-     * Returns an unmodifiable view of the maintenance history.
+     * Returns an unmodifiable view of the maintenance history
      */
     public List<MaintenanceRecord> getMaintenanceHistory() {
         return Collections.unmodifiableList(maintenanceHistory);
     }
 
-    // ---- Setters with validation ----
+    // ---- setters with validation ----
     public void setNickname(String nickname) {
         this.nickname = requireNonBlank(nickname, "nickname");
     }
@@ -75,11 +74,11 @@ public abstract class VehicleBase {
         this.currentMileage = mileage;
     }
 
-    // ---- Maintenance behavior ----
+    // ---- maintenance behavior ----
     public void addMaintenanceRecord(MaintenanceRecord record) {
         Objects.requireNonNull(record, "record cannot be null");
 
-        // sanity check: don't allow a service mileage greater than current mileage
+        // don't allow a service mileage greater than current mileage
         if (record.getMileageAtService() > this.currentMileage) {
             throw new IllegalArgumentException("mileageAtService cannot exceed currentMileage");
         }
@@ -92,8 +91,8 @@ public abstract class VehicleBase {
     }
 
     /**
-     * Vehicle type is determined by subclass (polymorphism).
-     * Ex: Car returns "Car", Motorcycle returns "Motorcycle".
+     * Vehicle type is determined by subclass
+     * eg. Car returns "Car", Motorcycle returns "Motorcycle"
      */
     public abstract String getVehicleType();
 
@@ -110,7 +109,7 @@ public abstract class VehicleBase {
                 '}';
     }
 
-    // ---- Helpers ----
+    // ---- helpers ----
     public static String requireNonBlank(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(fieldName + " is required");
@@ -125,7 +124,7 @@ public abstract class VehicleBase {
     }
 
     protected static void validateYear(int year) {
-        // Simple validation: reasonable range. Adjust if your instructor wants different rules.
+        // simple validation on model year, reasonable range for automobiles
         if (year < 1886 || year > 2100) {
             throw new IllegalArgumentException("year must be between 1886 and 2100");
         }

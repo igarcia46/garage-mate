@@ -3,7 +3,7 @@ package com.garagemate.model;
 import java.util.*;
 
 /**
- * Garage is a container for vehicles (your "in-memory database").
+ * Garage is a container for vehicles
  */
 public class Garage {
 

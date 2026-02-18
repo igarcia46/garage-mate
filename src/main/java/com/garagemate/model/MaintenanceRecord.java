@@ -3,8 +3,8 @@ package com.garagemate.model;
 import java.util.Objects;
 
 /**
- * Represents one maintenance event for a vehicle.
- * Dates are stored as String to keep persistence simple (local text file).
+ * Represents one maintenance event for a vehicle
+ * Dates are stored as String to keep persistence simple
  */
 public class MaintenanceRecord {
 

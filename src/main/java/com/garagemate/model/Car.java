@@ -1,7 +1,7 @@
 package com.garagemate.model;
 
 /**
- * Car is a type of VehicleBase.
+ * Car is a type of VehicleBase
  */
 public class Car extends VehicleBase {
 
