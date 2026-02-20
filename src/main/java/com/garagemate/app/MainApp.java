@@ -14,6 +14,14 @@ import javafx.stage.Stage;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
+import javafx.scene.layout.BackgroundPosition;
+import javafx.scene.layout.BackgroundRepeat;
+import javafx.scene.layout.BackgroundSize;
+import javafx.scene.layout.StackPane;
+import javafx.scene.image.Image;
+
 import java.util.UUID;
 
 public class MainApp extends Application {
@@ -54,7 +62,7 @@ public class MainApp extends Application {
     private TextField recordMileageField;
     private TextArea recordNotesArea;
 
-    //images
+    // images
     private StackPane homeCenter;
     private Pane emptyBackgroundPane;
     private VBox emptyMessageOverlay;
@@ -67,11 +75,14 @@ public class MainApp extends Application {
         root = new BorderPane();
         root.setTop(buildHeader());
 
-        showHomeView(); // default view
-
         Scene scene = new Scene(root, 900, 550);
         stage.setTitle("Garage Mate");
         stage.setScene(scene);
+        stage.setResizable(false);
+        stage.setMinWidth(1200);
+        stage.setMinHeight(750);
+        stage.setMaxWidth(1200);
+        stage.setMaxHeight(750);
 
         // save on close
         stage.setOnCloseRequest(e -> safeSave());
@@ -79,6 +90,7 @@ public class MainApp extends Application {
         stage.show();
 
         refreshVehicleList();
+        showHomeView(); // start view
     }
 
     // -----------------------------
@@ -111,6 +123,7 @@ public class MainApp extends Application {
             }
         });
 
+        // populate list
         vehicleListView.setCellFactory(list -> new ListCell<>() {
             @Override
             protected void updateItem(VehicleBase item, boolean empty) {
@@ -158,6 +171,7 @@ public class MainApp extends Application {
         updateHomeEmptyState();
     }
 
+    // setting background when car list is empty so user sees something
     private Pane buildEmptyBackgroundPane() {
         Pane pane = new Pane();
 
@@ -170,7 +184,7 @@ public class MainApp extends Application {
         BackgroundSize size = new BackgroundSize(
                 100, 100,
                 true, true,
-                false, true   // contain=false, cover=true (fills the space)
+                false, true   // contain=false, cover=true -> fills the space
         );
 
         BackgroundImage bg = new BackgroundImage(
@@ -191,13 +205,13 @@ public class MainApp extends Application {
         msg.setAlignment(Pos.CENTER);
 
         // readability backing
-        Label backing = new Label();
-        backing.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 12 18; -fx-background-radius: 10;");
+        //Label backing = new Label();
+        //backing.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 12 18; -fx-background-radius: 10;");
 
-        StackPane message = new StackPane(backing, msg);
+        StackPane message = new StackPane(msg);
 
         VBox box = new VBox(message);
-        box.setAlignment(Pos.CENTER);
+        box.setAlignment(Pos.TOP_CENTER);
         box.setMouseTransparent(true); // allows clicks to pass through
         return box;
     }
@@ -241,6 +255,11 @@ public class MainApp extends Application {
     // -----------------------------
     // add vehicle view
     // -----------------------------
+    private Label label(String text){
+        Label l = new Label(text);
+        l.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: white;");
+        return l;
+    }
     private void showAddVehicleView() {
         // build form fields each time
         typeBox = new ComboBox<>();
@@ -259,41 +278,100 @@ public class MainApp extends Application {
         ccField = new TextField();
         ccField.setPromptText("e.g., 1103");
 
-        extraLabel = new Label("Doors:");
+        extraLabel = label("Doors:");
 
         GridPane grid = new GridPane();
+        ColumnConstraints c1 = new ColumnConstraints();
+        c1.setMinWidth(140);
+
+        ColumnConstraints c2 = new ColumnConstraints();
+        c2.setHgrow(Priority.ALWAYS);
+
+        grid.getColumnConstraints().addAll(c1, c2);
+        grid.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        grid.setMaxHeight(Double.MAX_VALUE);
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(12));
 
         int r = 0;
-        grid.add(new Label("Type:"), 0, r);
+        grid.add(label("Type:"), 0, r);
         grid.add(typeBox, 1, r++);
 
-        grid.add(new Label("Nickname:"), 0, r);
+        grid.add(label("Nickname:"), 0, r);
         grid.add(nicknameField, 1, r++);
 
-        grid.add(new Label("Make:"), 0, r);
+        grid.add(label("Make:"), 0, r);
         grid.add(makeField, 1, r++);
 
-        grid.add(new Label("Model:"), 0, r);
+        grid.add(label("Model:"), 0, r);
         grid.add(modelField, 1, r++);
 
-        grid.add(new Label("Year:"), 0, r);
+        grid.add(label("Year:"), 0, r);
         grid.add(yearField, 1, r++);
 
-        grid.add(new Label("Current Mileage:"), 0, r);
+        grid.add(label("Current Mileage:"), 0, r);
         grid.add(mileageField, 1, r++);
 
         grid.add(extraLabel, 0, r);
         grid.add(doorsField, 1, r);
+
+        for (int i = 0; i <= r; i++) {
+            RowConstraints rc = new RowConstraints();
+            rc.setVgrow(Priority.ALWAYS);
+            grid.getRowConstraints().add(rc);
+        }
+
+        String inputStyle = """
+            -fx-pref-height: 36;
+            -fx-font-size: 14px;
+            -fx-background-radius: 8;
+        """;
+
+        typeBox.setStyle(inputStyle);
+        nicknameField.setStyle(inputStyle);
+        makeField.setStyle(inputStyle);
+        modelField.setStyle(inputStyle);
+        yearField.setStyle(inputStyle);
+        mileageField.setStyle(inputStyle);
+        doorsField.setStyle(inputStyle);
+        ccField.setStyle(inputStyle);
+
 
         // switch extra field based on type
         final int extraRowIndex = r;
         typeBox.setOnAction(e -> updateExtraField(grid, extraRowIndex));
 
         // center becomes the form
-        root.setCenter(grid);
+        Image bg = new Image(getClass().getResource("/images/garage.jpg").toExternalForm());
+
+        BackgroundSize bgSize = new BackgroundSize(
+                1.0, 1.0, true, true, false, true
+        );
+        BackgroundImage bgImg = new BackgroundImage(
+                bg,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                bgSize
+        );
+
+        StackPane center = new StackPane();
+        center.setBackground(new Background(bgImg));
+
+        // keep the form readable
+        // grid.setStyle("-fx-background-color: rgba(255,255,255,0.85); -fx-background-radius: 10;");
+        grid.setStyle("""
+            -fx-background-color: rgba(30,30,30,0.75);
+            -fx-background-radius: 14;
+        """);
+        grid.setMaxWidth(520); // keeps it from stretching too wide
+
+        center.getChildren().add(grid);
+        StackPane.setAlignment(grid, Pos.CENTER_LEFT);
+        StackPane.setMargin(grid, new Insets(12));
+
+        root.setCenter(center);
 
         // bottom buttons become 'Add'/'Cancel'
         Button add = new Button("Add");
