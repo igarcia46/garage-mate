@@ -395,6 +395,7 @@ public class MainApp extends Application {
 
     // add vehicle details
     private void showVehicleDetailsView(VehicleBase vehicle) {
+        UiUtils.hideHeader(root);
         this.selectedVehicle = vehicle;
 
         // Top summary
