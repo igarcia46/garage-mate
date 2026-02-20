@@ -2,6 +2,7 @@ package com.garagemate.app;
 
 import com.garagemate.model.*;
 import com.garagemate.persistence.TextFileRepository;
+import com.garagemate.ui.UiUtils;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -65,7 +66,7 @@ public class MainApp extends Application {
     // images
     private StackPane homeCenter;
     private Pane emptyBackgroundPane;
-    private VBox emptyMessageOverlay;
+    VBox header = UiUtils.buildHeader(vehicleItems);
 
     @Override
     public void start(Stage stage) {
@@ -73,7 +74,7 @@ public class MainApp extends Application {
         garage = repo.loadGarage();
 
         root = new BorderPane();
-        root.setTop(buildHeader());
+        root.setTop(header);
 
         Scene scene = new Scene(root, 900, 550);
         stage.setTitle("Garage Mate");
@@ -94,24 +95,10 @@ public class MainApp extends Application {
     }
 
     // -----------------------------
-    // Header
-    // -----------------------------
-    private VBox buildHeader() {
-        Label title = new Label("Garage Mate");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
-
-        Label subtitle = new Label("Your garage vehicles (loaded from " + DATA_FILE + ")");
-        subtitle.setStyle("-fx-text-fill: #555;");
-
-        VBox header = new VBox(4, title, subtitle);
-        header.setPadding(new Insets(12));
-        return header;
-    }
-
-    // -----------------------------
     // Home View (list + buttons)
     // -----------------------------
     private void showHomeView() {
+        UiUtils.showHeader(root);
         // center: vehicle list
         vehicleListView = new ListView<>(vehicleItems);
 
@@ -140,10 +127,9 @@ public class MainApp extends Application {
 
         // empty background + message
         emptyBackgroundPane = buildEmptyBackgroundPane();     // background image
-        emptyMessageOverlay = buildEmptyMessageOverlay();     // text lives here
 
         // stack: list at bottom, empty state on top (only visible when empty)
-        homeCenter = new StackPane(vehicleListView, emptyBackgroundPane, emptyMessageOverlay);
+        homeCenter = new StackPane(vehicleListView, emptyBackgroundPane);
         root.setCenter(homeCenter);
 
         // bottom buttons
@@ -160,7 +146,7 @@ public class MainApp extends Application {
         buttons.setPadding(new Insets(12));
         buttons.setAlignment(Pos.CENTER_LEFT);
 
-        countLabel = new Label("Vehicles: " + vehicleItems.size());
+        countLabel = UiUtils.createLabel("Vehicles: " + vehicleItems.size());
         countLabel.setStyle("-fx-text-fill: #555;");
 
         VBox bottom = new VBox(8, buttons, countLabel);
@@ -168,7 +154,7 @@ public class MainApp extends Application {
         root.setBottom(bottom);
 
         // IMPORTANT: toggle visibility based on list contents
-        updateHomeEmptyState();
+        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane);
     }
 
     // setting background when car list is empty so user sees something
@@ -199,44 +185,12 @@ public class MainApp extends Application {
         return pane;
     }
 
-    private VBox buildEmptyMessageOverlay() {
-        Label msg = new Label("No vehicles yet.\nClick 'Add Vehicle' to get started.");
-        msg.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
-        msg.setAlignment(Pos.CENTER);
-
-        // readability backing
-        //Label backing = new Label();
-        //backing.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 12 18; -fx-background-radius: 10;");
-
-        StackPane message = new StackPane(msg);
-
-        VBox box = new VBox(message);
-        box.setAlignment(Pos.TOP_CENTER);
-        box.setMouseTransparent(true); // allows clicks to pass through
-        return box;
-    }
-
-    private void updateHomeEmptyState() {
-        boolean empty = vehicleItems.isEmpty();
-
-        if (emptyBackgroundPane != null) {
-            emptyBackgroundPane.setVisible(empty);
-            emptyBackgroundPane.setManaged(empty);
-        }
-        if (emptyMessageOverlay != null) {
-            emptyMessageOverlay.setVisible(empty);
-            emptyMessageOverlay.setManaged(empty);
-        }
-    }
-
-
-
     private void onRemoveSelectedVehicle() {
         VehicleBase selected = vehicleListView.getSelectionModel().getSelectedItem();
 
         // check if user has selected a vehicle
         if (selected == null) {
-            showError("Nothing Selected", "Please select a vehicle to remove.");
+            UiUtils.showError("Nothing Selected", "Please select a vehicle to remove.");
             return;
         }
 
@@ -255,12 +209,8 @@ public class MainApp extends Application {
     // -----------------------------
     // add vehicle view
     // -----------------------------
-    private Label label(String text){
-        Label l = new Label(text);
-        l.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: white;");
-        return l;
-    }
     private void showAddVehicleView() {
+        UiUtils.hideHeader(root);
         // build form fields each time
         typeBox = new ComboBox<>();
         typeBox.getItems().addAll("Car", "Motorcycle");
@@ -278,7 +228,7 @@ public class MainApp extends Application {
         ccField = new TextField();
         ccField.setPromptText("e.g., 1103");
 
-        extraLabel = label("Doors:");
+        extraLabel = UiUtils.createLabel("Doors:");
 
         GridPane grid = new GridPane();
         ColumnConstraints c1 = new ColumnConstraints();
@@ -295,22 +245,22 @@ public class MainApp extends Application {
         grid.setPadding(new Insets(12));
 
         int r = 0;
-        grid.add(label("Type:"), 0, r);
+        grid.add(UiUtils.createLabel("Type:"), 0, r);
         grid.add(typeBox, 1, r++);
 
-        grid.add(label("Nickname:"), 0, r);
+        grid.add(UiUtils.createLabel("Nickname:"), 0, r);
         grid.add(nicknameField, 1, r++);
 
-        grid.add(label("Make:"), 0, r);
+        grid.add(UiUtils.createLabel("Make:"), 0, r);
         grid.add(makeField, 1, r++);
 
-        grid.add(label("Model:"), 0, r);
+        grid.add(UiUtils.createLabel("Model:"), 0, r);
         grid.add(modelField, 1, r++);
 
-        grid.add(label("Year:"), 0, r);
+        grid.add(UiUtils.createLabel("Year:"), 0, r);
         grid.add(yearField, 1, r++);
 
-        grid.add(label("Current Mileage:"), 0, r);
+        grid.add(UiUtils.createLabel("Current Mileage:"), 0, r);
         grid.add(mileageField, 1, r++);
 
         grid.add(extraLabel, 0, r);
@@ -386,7 +336,7 @@ public class MainApp extends Application {
         buttons.setAlignment(Pos.CENTER_LEFT);
 
         // cool hint 'feature'
-        Label hint = new Label("Tip: IDs are auto-generated (UUID).");
+        Label hint = UiUtils.createLabel("Tip: IDs are auto-generated (UUID).");
         hint.setStyle("-fx-text-fill: #555;");
 
         VBox bottom = new VBox(8, buttons, hint);
@@ -416,7 +366,7 @@ public class MainApp extends Application {
             showHomeView();
             refreshVehicleList();
         } catch (Exception ex) {
-            showError("Invalid Input", ex.getMessage());
+            UiUtils.showError("Invalid Input", ex.getMessage());
         }
     }
 
@@ -425,9 +375,9 @@ public class MainApp extends Application {
         String type = typeBox.getValue();
 
         // prevent file-breaking inputs since im using pipes as delimiter for my parsing
-        validateNoPipes(nicknameField.getText(), "Nickname");
-        validateNoPipes(makeField.getText(), "Make");
-        validateNoPipes(modelField.getText(), "Model");
+        UiUtils.validateNoPipes(nicknameField.getText(), "Nickname");
+        UiUtils.validateNoPipes(makeField.getText(), "Make");
+        UiUtils.validateNoPipes(modelField.getText(), "Model");
 
         int year = Integer.parseInt(yearField.getText().trim());
         int mileage = Integer.parseInt(mileageField.getText().trim());
@@ -445,13 +395,14 @@ public class MainApp extends Application {
 
     // add vehicle details
     private void showVehicleDetailsView(VehicleBase vehicle) {
+        UiUtils.hideHeader(root);
         this.selectedVehicle = vehicle;
 
         // Top summary
-        Label title = new Label(vehicle.getNickname() + " (" + vehicle.getVehicleType() + ")");
+        Label title = UiUtils.createLabel(vehicle.getNickname() + " (" + vehicle.getVehicleType() + ")");
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
-        Label info = new Label(
+        Label info = UiUtils.createLabel(
                 vehicle.getYear() + " " + vehicle.getMake() + " " + vehicle.getModel()
                         + "  •  Current Mileage: " + vehicle.getCurrentMileage()
         );
@@ -522,7 +473,7 @@ public class MainApp extends Application {
 
         MaintenanceRecord selected = recordTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showError("Nothing Selected", "Please select a service record to remove.");
+            UiUtils.showError("Nothing Selected", "Please select a service record to remove.");
             return;
         }
 
@@ -542,7 +493,7 @@ public class MainApp extends Application {
     private void showAddRecordView() {
         if (selectedVehicle == null) return;
 
-        Label title = new Label("Add Service Record for: " + selectedVehicle.getNickname());
+        Label title = UiUtils.createLabel("Add Service Record for: " + selectedVehicle.getNickname());
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
         // TODO: want to add validation here, currently can set anything as date which is ok for scope
@@ -567,16 +518,16 @@ public class MainApp extends Application {
         int r = 0;
         grid.add(title, 0, r++, 2, 1);
 
-        grid.add(new Label("Service Date:"), 0, r);
+        grid.add(UiUtils.createLabel("Service Date:", true), 0, r);
         grid.add(recordDateField, 1, r++);
 
-        grid.add(new Label("Service Type:"), 0, r);
+        grid.add(UiUtils.createLabel("Service Type:", true), 0, r);
         grid.add(recordTypeField, 1, r++);
 
-        grid.add(new Label("Mileage at Service:"), 0, r);
+        grid.add(UiUtils.createLabel("Mileage at Service:", true), 0, r);
         grid.add(recordMileageField, 1, r++);
 
-        grid.add(new Label("Notes:"), 0, r);
+        grid.add(UiUtils.createLabel("Notes:", true), 0, r);
         grid.add(recordNotesArea, 1, r++);
 
         root.setCenter(grid);
@@ -597,8 +548,8 @@ public class MainApp extends Application {
     private void onSubmitAddRecord() {
         try {
             // Basic input validation
-            validateNoPipes(recordDateField.getText(), "Service Date");
-            validateNoPipes(recordTypeField.getText(), "Service Type");
+            UiUtils.validateNoPipes(recordDateField.getText(), "Service Date");
+            UiUtils.validateNoPipes(recordTypeField.getText(), "Service Type");
 
             int miles = Integer.parseInt(recordMileageField.getText().trim());
             String notes = recordNotesArea.getText() == null ? "" : recordNotesArea.getText().trim();
@@ -633,20 +584,9 @@ public class MainApp extends Application {
             showVehicleDetailsView(selectedVehicle);
 
         } catch (NumberFormatException nfe) {
-            showError("Invalid Input", "Mileage must be a valid integer.");
+            UiUtils.showError("Invalid Input", "Mileage must be a valid integer.");
         } catch (Exception ex) {
-            showError("Invalid Input", ex.getMessage());
-        }
-    }
-
-    // none of the user-input fields can contain pipes
-    // except for maybe notes
-    private void validateNoPipes(String value, String fieldName) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException(fieldName + " is required.");
-        }
-        if (value.contains("|")) {
-            throw new IllegalArgumentException(fieldName + " cannot contain the '|' character.");
+            UiUtils.showError("Invalid Input", ex.getMessage());
         }
     }
 
@@ -658,23 +598,16 @@ public class MainApp extends Application {
         if (countLabel != null) {
             countLabel.setText("Vehicles: " + vehicleItems.size());
         }
-        updateHomeEmptyState();
+        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane);
+        root.setTop(UiUtils.buildHeader(vehicleItems));
     }
 
     private void safeSave() {
         try {
             repo.saveGarage(garage);
         } catch (Exception ex) {
-            showError("Save Failed", ex.getMessage());
+            UiUtils.showError("Save Failed", ex.getMessage());
         }
-    }
-
-    private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     public static void main(String[] args) {
