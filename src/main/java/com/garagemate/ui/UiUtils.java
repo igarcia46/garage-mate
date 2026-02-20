@@ -2,6 +2,7 @@ package com.garagemate.ui;
 
 import com.garagemate.model.VehicleBase;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
@@ -40,16 +41,47 @@ public class UiUtils {
         } else return createLabel(text);
     }
 
-    public static void updateHomeEmptyState(ObservableList<VehicleBase> vehicleItems, Pane emptyBackgroundPane, VBox emptyMessageOverlay) {
+    public static void updateHomeEmptyState(ObservableList<VehicleBase> vehicleItems, Pane emptyBackgroundPane) {
         boolean empty = vehicleItems.isEmpty();
 
         if (emptyBackgroundPane != null) {
             emptyBackgroundPane.setVisible(empty);
             emptyBackgroundPane.setManaged(empty);
         }
-        if (emptyMessageOverlay != null) {
-            emptyMessageOverlay.setVisible(empty);
-            emptyMessageOverlay.setManaged(empty);
+    }
+
+    public static VBox buildHeader(ObservableList<VehicleBase> vehicleItems) {
+        boolean empty = vehicleItems.isEmpty();
+
+        Label title = UiUtils.createLabel("Garage Mate");
+        String message;
+        if (!empty) {
+            message = "Double click on a car to open it's Maintenance details.";
+        } else {
+            message = "Your garage is empty. Click the 'Add Vehicle' button to add a vehicle.";
+        }
+
+        Label subtitle = UiUtils.createLabel(message, true);
+        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+
+        VBox header = new VBox(4, subtitle);
+        header.setPadding(new Insets(12));
+        return header;
+    }
+
+    public static void hideHeader(BorderPane root) {
+        var top = root.getTop();
+        if (top != null) {
+            top.setVisible(false);
+            top.setManaged(false);
+        }
+    }
+
+    public static void showHeader(BorderPane root) {
+        var top = root.getTop();
+        if (top != null) {
+            top.setVisible(true);
+            top.setManaged(true);
         }
     }
 }

@@ -66,7 +66,7 @@ public class MainApp extends Application {
     // images
     private StackPane homeCenter;
     private Pane emptyBackgroundPane;
-    private VBox emptyMessageOverlay;
+    VBox header = UiUtils.buildHeader(vehicleItems);
 
     @Override
     public void start(Stage stage) {
@@ -74,7 +74,7 @@ public class MainApp extends Application {
         garage = repo.loadGarage();
 
         root = new BorderPane();
-        root.setTop(buildHeader());
+        root.setTop(header);
 
         Scene scene = new Scene(root, 900, 550);
         stage.setTitle("Garage Mate");
@@ -95,24 +95,10 @@ public class MainApp extends Application {
     }
 
     // -----------------------------
-    // Header
-    // -----------------------------
-    private VBox buildHeader() {
-        Label title = UiUtils.createLabel("Garage Mate");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
-
-        Label subtitle = UiUtils.createLabel("Your garage vehicles (loaded from " + DATA_FILE + ")");
-        subtitle.setStyle("-fx-text-fill: #555;");
-
-        VBox header = new VBox(4, title, subtitle);
-        header.setPadding(new Insets(12));
-        return header;
-    }
-
-    // -----------------------------
     // Home View (list + buttons)
     // -----------------------------
     private void showHomeView() {
+        UiUtils.showHeader(root);
         // center: vehicle list
         vehicleListView = new ListView<>(vehicleItems);
 
@@ -141,10 +127,9 @@ public class MainApp extends Application {
 
         // empty background + message
         emptyBackgroundPane = buildEmptyBackgroundPane();     // background image
-        emptyMessageOverlay = buildEmptyMessageOverlay();     // text lives here
 
         // stack: list at bottom, empty state on top (only visible when empty)
-        homeCenter = new StackPane(vehicleListView, emptyBackgroundPane, emptyMessageOverlay);
+        homeCenter = new StackPane(vehicleListView, emptyBackgroundPane);
         root.setCenter(homeCenter);
 
         // bottom buttons
@@ -169,7 +154,7 @@ public class MainApp extends Application {
         root.setBottom(bottom);
 
         // IMPORTANT: toggle visibility based on list contents
-        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane, emptyMessageOverlay);
+        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane);
     }
 
     // setting background when car list is empty so user sees something
@@ -200,23 +185,6 @@ public class MainApp extends Application {
         return pane;
     }
 
-    private VBox buildEmptyMessageOverlay() {
-        Label msg = UiUtils.createLabel("No vehicles yet.\nClick 'Add Vehicle' to get started.");
-        msg.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
-        msg.setAlignment(Pos.CENTER);
-
-        // readability backing
-        //Label backing = new Label();
-        //backing.setStyle("-fx-background-color: rgba(0,0,0,0.35); -fx-padding: 12 18; -fx-background-radius: 10;");
-
-        StackPane message = new StackPane(msg);
-
-        VBox box = new VBox(message);
-        box.setAlignment(Pos.TOP_CENTER);
-        box.setMouseTransparent(true); // allows clicks to pass through
-        return box;
-    }
-
     private void onRemoveSelectedVehicle() {
         VehicleBase selected = vehicleListView.getSelectionModel().getSelectedItem();
 
@@ -242,6 +210,7 @@ public class MainApp extends Application {
     // add vehicle view
     // -----------------------------
     private void showAddVehicleView() {
+        UiUtils.hideHeader(root);
         // build form fields each time
         typeBox = new ComboBox<>();
         typeBox.getItems().addAll("Car", "Motorcycle");
@@ -628,7 +597,8 @@ public class MainApp extends Application {
         if (countLabel != null) {
             countLabel.setText("Vehicles: " + vehicleItems.size());
         }
-        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane, emptyMessageOverlay);
+        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane);
+        root.setTop(UiUtils.buildHeader(vehicleItems));
     }
 
     private void safeSave() {
