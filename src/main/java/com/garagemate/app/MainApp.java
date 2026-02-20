@@ -169,7 +169,7 @@ public class MainApp extends Application {
         root.setBottom(bottom);
 
         // IMPORTANT: toggle visibility based on list contents
-        updateHomeEmptyState();
+        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane, emptyMessageOverlay);
     }
 
     // setting background when car list is empty so user sees something
@@ -216,21 +216,6 @@ public class MainApp extends Application {
         box.setMouseTransparent(true); // allows clicks to pass through
         return box;
     }
-
-    private void updateHomeEmptyState() {
-        boolean empty = vehicleItems.isEmpty();
-
-        if (emptyBackgroundPane != null) {
-            emptyBackgroundPane.setVisible(empty);
-            emptyBackgroundPane.setManaged(empty);
-        }
-        if (emptyMessageOverlay != null) {
-            emptyMessageOverlay.setVisible(empty);
-            emptyMessageOverlay.setManaged(empty);
-        }
-    }
-
-
 
     private void onRemoveSelectedVehicle() {
         VehicleBase selected = vehicleListView.getSelectionModel().getSelectedItem();
@@ -643,7 +628,7 @@ public class MainApp extends Application {
         if (countLabel != null) {
             countLabel.setText("Vehicles: " + vehicleItems.size());
         }
-        updateHomeEmptyState();
+        UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane, emptyMessageOverlay);
     }
 
     private void safeSave() {

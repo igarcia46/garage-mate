@@ -1,7 +1,10 @@
 package com.garagemate.ui;
 
+import com.garagemate.model.VehicleBase;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
+import javafx.scene.layout.*;
 
 public class UiUtils {
     public static void showError(String title, String message) {
@@ -35,5 +38,18 @@ public class UiUtils {
             l.setStyle("-fx-font-size: 14px; -fx-font-weight: 600; -fx-text-fill: black;");
             return l;
         } else return createLabel(text);
+    }
+
+    public static void updateHomeEmptyState(ObservableList<VehicleBase> vehicleItems, Pane emptyBackgroundPane, VBox emptyMessageOverlay) {
+        boolean empty = vehicleItems.isEmpty();
+
+        if (emptyBackgroundPane != null) {
+            emptyBackgroundPane.setVisible(empty);
+            emptyBackgroundPane.setManaged(empty);
+        }
+        if (emptyMessageOverlay != null) {
+            emptyMessageOverlay.setVisible(empty);
+            emptyMessageOverlay.setManaged(empty);
+        }
     }
 }
