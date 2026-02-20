@@ -68,6 +68,140 @@ public class MainApp extends Application {
     private Pane emptyBackgroundPane;
     VBox header = UiUtils.buildHeader(vehicleItems);
 
+    // card inner class
+    private static class VehicleCardCell extends ListCell<VehicleBase> {
+
+        private final StackPane card = new StackPane();
+        private final VBox textBox = new VBox(4);
+
+        private final Label nicknameLbl = new Label();
+        private final Label detailsLbl  = new Label();
+
+        private final HBox row;
+
+        private void applyHoverStyle() {
+            card.setStyle(
+                    "-fx-background-color: rgba(40,40,40,0.92);" +
+                            "-fx-background-radius: 14;" +
+                            "-fx-border-color: rgba(255,255,255,0.18);" +
+                            "-fx-border-radius: 14;" +
+                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 12, 0.2, 0, 4);"
+            );
+        }
+
+        private void applyNormalStyle() {
+            card.setStyle(
+                    "-fx-background-color: rgba(25,25,25,0.88);" +
+                            "-fx-background-radius: 14;" +
+                            "-fx-border-color: rgba(255,255,255,0.08);" +
+                            "-fx-border-radius: 14;" +
+                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 12, 0.2, 0, 4);"
+            );
+        }
+
+        private void applySelectedStyle() {
+            card.setStyle(
+                    "-fx-background-color: rgba(45,45,45,0.95);" +
+                            "-fx-background-radius: 14;" +
+                            "-fx-border-color: #4FC3F7;" +
+                            "-fx-border-width: 2;" +
+                            "-fx-border-radius: 14;" +
+                            "-fx-effect: dropshadow(gaussian, rgba(79,195,247,0.6), 18, 0.4, 0, 0);"
+            );
+        }
+
+        VehicleCardCell(BorderPane root) {
+            selectedProperty().addListener((obs, wasSelected, isNowSelected) -> {
+                if (isNowSelected) {
+                    applySelectedStyle();
+                } else {
+                    applyNormalStyle();
+                }
+            });
+
+
+            nicknameLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #f2f2f2;");
+            detailsLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #cfcfcf;");
+
+            textBox.getChildren().addAll(nicknameLbl, detailsLbl);
+
+            card.getChildren().add(textBox);
+            card.setPadding(new Insets(12));
+            card.setStyle(
+                    "-fx-background-color: rgba(25, 25, 25, 0.85);" +
+                            "-fx-background-radius: 14;" +
+                            "-fx-border-color: rgba(255,255,255,0.08);" +
+                            "-fx-border-radius: 14;"
+            );
+
+            // 1/3 width
+            card.prefWidthProperty().bind(root.widthProperty().multiply(0.33));
+            card.maxWidthProperty().bind(root.widthProperty().multiply(0.33));
+
+            // glow
+            card.setOnMouseEntered(e -> {
+                if (!isSelected()) applyHoverStyle();
+            });
+
+            card.setOnMouseExited(e -> {
+                if (isSelected()) applySelectedStyle();
+                else applyNormalStyle();
+            });
+
+            // row wrapper
+            row = new HBox(card);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(6, 0, 6, 0));
+
+            // only allow selection if the click is inside the card
+            row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, e -> {
+                // mouse position relative to the card
+                double x = e.getX();
+
+                // card is left-aligned inside the row  so x > card width means click was outside the card
+                if (x > card.getWidth()) {
+                    // consume the event so ListView doesn't select the row
+                    e.consume();
+
+                    // clicking empty space to clearsselection
+                    ListView<VehicleBase> lv = getListView();
+                    if (lv != null) {
+                        lv.getSelectionModel().clearSelection();
+                    }
+                }
+            });
+
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            setStyle("-fx-background-color: transparent;");
+            applyNormalStyle();
+        }
+
+        @Override
+        protected void updateItem(VehicleBase item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+
+            nicknameLbl.setText(item.getNickname());
+            detailsLbl.setText(
+                    item.getYear() + " " + item.getMake() + " " + item.getModel()
+                            + " • " + item.getVehicleType()
+                            + " • " + item.getCurrentMileage() + " mi"
+            );
+
+            setGraphic(row);
+            if (isSelected()) {
+                applySelectedStyle();
+            } else {
+                applyNormalStyle();
+            }
+        }
+    }
+    // end inner class
+
     @Override
     public void start(Stage stage) {
         repo = new TextFileRepository(DATA_FILE);
@@ -94,13 +228,67 @@ public class MainApp extends Application {
         showHomeView(); // start view
     }
 
+    private void enableDeselectOnEmptyClick(ListView<?> listView) {
+        listView.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, e -> {
+
+            javafx.scene.Node n = e.getPickResult().getIntersectedNode();
+
+            // walk up the node tree until we find a ListCell
+            while (n != null && !(n instanceof ListCell)) {
+                n = n.getParent();
+            }
+
+            // clicked outside any cell
+            if (n == null) {
+                listView.getSelectionModel().clearSelection();
+                return;
+            }
+
+            // clicked an "empty" cell, theyre really blank
+            @SuppressWarnings("rawtypes")
+            ListCell cell = (ListCell) n;
+
+            if (cell.isEmpty()) {
+                listView.getSelectionModel().clearSelection();
+            }
+        });
+    }
+
+    private Pane buildHomeBackground() {
+        Pane pane = new Pane();
+
+        var url = getClass().getResource("/images/garage.jpg");
+        if (url == null) {
+            System.out.println("⚠ Missing image: /images/garage.jpg");
+            return pane;
+        }
+
+        BackgroundSize size = new BackgroundSize(
+                100, 100,
+                true, true,
+                false, true
+        );
+
+        BackgroundImage bg = new BackgroundImage(
+                new Image(url.toExternalForm()),
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.CENTER,
+                size
+        );
+
+        pane.setBackground(new Background(bg));
+        return pane;
+    }
+
     // -----------------------------
     // Home View (list + buttons)
     // -----------------------------
     private void showHomeView() {
         UiUtils.showHeader(root);
-        // center: vehicle list
+        // vehicle list
         vehicleListView = new ListView<>(vehicleItems);
+        enableDeselectOnEmptyClick(vehicleListView);
 
         // open details
         vehicleListView.setOnMouseClicked(e -> {
@@ -110,26 +298,15 @@ public class MainApp extends Application {
             }
         });
 
-        // populate list
-        vehicleListView.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(VehicleBase item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) setText(null);
-                else {
-                    setText(item.getNickname()
-                            + "  •  " + item.getYear() + " " + item.getMake() + " " + item.getModel()
-                            + "  •  " + item.getVehicleType()
-                            + "  •  " + item.getCurrentMileage() + " mi");
-                }
-            }
-        });
+        vehicleListView.setCellFactory(list -> new VehicleCardCell(root));
+        vehicleListView.setPadding(new Insets(12));
+        vehicleListView.setStyle("-fx-background-color: transparent;"); // play woth this
 
-        // empty background + message
-        emptyBackgroundPane = buildEmptyBackgroundPane();     // background image
+        // empty background
+        emptyBackgroundPane = buildEmptyBackgroundPane();
 
-        // stack: list at bottom, empty state on top (only visible when empty)
-        homeCenter = new StackPane(vehicleListView, emptyBackgroundPane);
+        Pane bg = buildHomeBackground();
+        homeCenter = new StackPane(bg, vehicleListView, emptyBackgroundPane);
         root.setCenter(homeCenter);
 
         // bottom buttons
