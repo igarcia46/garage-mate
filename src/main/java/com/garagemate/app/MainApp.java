@@ -323,14 +323,14 @@ public class MainApp extends Application {
         buttons.setPadding(new Insets(12));
         buttons.setAlignment(Pos.CENTER_LEFT);
 
-        countLabel = UiUtils.createLabel("Vehicles: " + vehicleItems.size());
+        countLabel = UiUtils.createLabel("Your garage is empty: ");// + vehicleItems.size());
         countLabel.setStyle("-fx-text-fill: #555;");
 
         VBox bottom = new VBox(8, buttons, countLabel);
         bottom.setPadding(new Insets(0, 12, 12, 12));
         root.setBottom(bottom);
 
-        // IMPORTANT: toggle visibility based on list contents
+        // toggle visibility based on list contents
         UiUtils.updateHomeEmptyState(vehicleItems, emptyBackgroundPane);
     }
 
@@ -575,7 +575,7 @@ public class MainApp extends Application {
         UiUtils.hideHeader(root);
         this.selectedVehicle = vehicle;
 
-        // Top summary
+        // top summary
         Label title = UiUtils.createLabel(vehicle.getNickname() + " (" + vehicle.getVehicleType() + ")");
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
 
@@ -746,7 +746,7 @@ public class MainApp extends Application {
                 }
             }
 
-            // Create record (UUID id for new records)
+            // create record (UUID id for new records)
             MaintenanceRecord record = new MaintenanceRecord(
                     UUID.randomUUID().toString(),
                     recordDateField.getText().trim(),
