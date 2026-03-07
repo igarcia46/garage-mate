@@ -323,7 +323,7 @@ public class MainApp extends Application {
         buttons.setPadding(new Insets(12));
         buttons.setAlignment(Pos.CENTER_LEFT);
 
-        countLabel = UiUtils.createLabel("Your garage is empty: ");// + vehicleItems.size());
+        countLabel = UiUtils.createLabel("Your garage is empty");// + vehicleItems.size());
         countLabel.setStyle("-fx-text-fill: #555;");
 
         VBox bottom = new VBox(8, buttons, countLabel);
@@ -470,7 +470,7 @@ public class MainApp extends Application {
         typeBox.setOnAction(e -> updateExtraField(grid, extraRowIndex));
 
         // center becomes the form
-        Image bg = new Image(getClass().getResource("/images/garage.jpg").toExternalForm());
+        Image bg = new Image(getClass().getResource("/images/open-road.jpg").toExternalForm());
 
         BackgroundSize bgSize = new BackgroundSize(
                 1.0, 1.0, true, true, false, true
@@ -613,7 +613,7 @@ public class MainApp extends Application {
         notesCol.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(c.getValue().getNotes())
         );
-        notesCol.setPrefWidth(360);
+        notesCol.setPrefWidth(Double.MAX_VALUE); // let notes take up remaining space since it will usually be the longest column
 
         recordTable.getColumns().setAll(dateCol, typeCol, milesCol, notesCol);
 
