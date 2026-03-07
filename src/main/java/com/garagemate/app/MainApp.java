@@ -613,7 +613,7 @@ public class MainApp extends Application {
         notesCol.setCellValueFactory(c ->
                 new ReadOnlyStringWrapper(c.getValue().getNotes())
         );
-        notesCol.setPrefWidth(Double.MAX_VALUE); // let notes take up remaining space since it will usually be the longest column
+        notesCol.setPrefWidth(800); // let notes take up remaining space since it will usually be the longest column
 
         recordTable.getColumns().setAll(dateCol, typeCol, milesCol, notesCol);
 
