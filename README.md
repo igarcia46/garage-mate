@@ -1,3 +1,12 @@
+## Download
+
+Download the latest installer from the Releases page.
+
+Garage Mate stores vehicle data locally at:
+%LOCALAPPDATA%\GarageMate\garage-data.txt
+
+## GarageMate
+
 The Garage Mate application is to be used for saving and organizing maintenance records for multiple cars and motorcycles. A user has a "garage" in the application, that can contain cars and motorcycles, and each one of those can contain multiple maintenance records.
 
 Garage Mate is a Java application that uses JavaFx to render the GUI, and handle events triggered by user interaction.
