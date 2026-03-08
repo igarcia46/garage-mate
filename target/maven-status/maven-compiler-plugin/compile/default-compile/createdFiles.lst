@@ -1,1 +1,11 @@
 com\garagemate\app\MainApp.class
+com\garagemate\model\MaintenanceRecord.class
+com\garagemate\model\VehicleBase.class
+com\garagemate\model\Car.class
+com\garagemate\model\Motorcycle.class
+com\garagemate\persistence\TextFileRepository$ParsedRecord.class
+com\garagemate\app\MainApp$VehicleCardCell.class
+com\garagemate\ui\UiUtils.class
+com\garagemate\persistence\TextFileRepository.class
+com\garagemate\model\Garage.class
+com\garagemate\app\BackendDriver.class
