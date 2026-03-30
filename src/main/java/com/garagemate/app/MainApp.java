@@ -23,12 +23,19 @@ import javafx.scene.layout.BackgroundSize;
 import javafx.scene.layout.StackPane;
 import javafx.scene.image.Image;
 
+import java.io.File;
 import java.util.UUID;
 
 public class MainApp extends Application {
 
     // our "db'
-    private static final String DATA_FILE = "garage-data.txt";
+    //private static final String DATA_FILE = "garage-data.txt";
+    private static final String DATA_FILE =
+            System.getProperty("user.home")
+                    + File.separator + "AppData"
+                    + File.separator + "Local"
+                    + File.separator + "GarageMate"
+                    + File.separator + "garage-data.txt";
 
     private TextFileRepository repo;
     private Garage garage;
@@ -204,6 +211,13 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) {
+        File dataFile = new File(DATA_FILE);
+        File parentDir = dataFile.getParentFile();
+
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+
         repo = new TextFileRepository(DATA_FILE);
         garage = repo.loadGarage();
 

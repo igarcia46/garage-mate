@@ -1,0 +1,7 @@
+com\garagemate\model\GarageTest.class
+com\garagemate\model\CarTest.class
+com\garagemate\model\MaintenanceRecordTest.class
+com\garagemate\persistence\TextFileRepositoryTest.class
+com\garagemate\model\MotorcycleTest.class
+com\garagemate\model\VehicleBaseTest$TestVehicle.class
+com\garagemate\model\VehicleBaseTest.class
